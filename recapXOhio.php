@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -27,30 +28,32 @@ class RecapXFanumTaxSkibidi extends Controller
         }
     }
 
-    public function getInvoiceAndTransactions($year, $month)
+    public function getInvoiceAndTransactions($month)
     {
         
         self::initializeYears();
 
-        if (!in_array($year, self::$years) && !in_array($month, self::$monthInNumber)){
-            return view('fanumtax.showChoosen')->with('bulan', self::$months)->with('tahun', self::$years);
+        if (!in_array($month, self::$months)){
+            return redirect()->route('rekap.index');
         }
 
-        $monthNumber = array_search($month, self::$months) + 1;
+        $monthNumber = array_search($month, self::$months)+1;
+        $data=[];
+        foreach (self::$years as $year) {
+            $dataInvoice = DB::table('invoice')->whereMonth('tanggal', $monthNumber)->whereYear('tanggal',$year)->get();
 
-        $dataInvoice = DB::table('invoice')->whereMonth('tanggal', $monthNumber)->whereYear('tanggal', $year)->get();
+            foreach ($dataInvoice as $invoice) {
 
-        $idInvoice = $dataInvoice->pluck('id')->all();
+                $idInvoice = $invoice->id;
+                $kodeInvoice = $invoice->nomor_invoice;
+                $dataTransaksi = Transaksi::where('fk_kode_invoice', $idInvoice)->get();
+                
+                $data[$year][$kodeInvoice] = $dataTransaksi;
 
-        $dataTransaksi = DB::table('transaksi')->whereIn('FK_kodeInvoice', $idInvoice)->get();
+            }
+        }
 
-        return view('fanumtax.showChoosen', ['invoices' => $dataInvoice, 'transactions' => $dataTransaksi, 'bulan' => self::$months, 'tahun'=> self::$years]);
+        return view('fanumtax.showChoosen', ['datas' => $data]);
     }
 
-    public function fanumTaxing()
-    {
-        self::initializeYears();
-        
-        return view('fanumtax.showChoosen')->with('bulan', self::$months)->with('tahun', self::$years);
-    }
 }

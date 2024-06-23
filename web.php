@@ -9,5 +9,5 @@ Route::middleware(['auth'])->group(function () {
     // route::XX(XX,XX);
     Route::get('fanum', [RecapXFanumTaxSkibidi::class, 'fanumTaxing']);
     Route::get('fanumWithTax/{month}/{ye    ar}', [RecapXFanumTaxSkibidi::class, 'getInvoiceAndTransactions'])->name('skibidi');
-
+    Route::get('/rekap_tiap_bulan/{month}',[RecapXFanumTaxSkibidi::class,'getInvoiceAndTransactions'])->name('monthly');
 });
